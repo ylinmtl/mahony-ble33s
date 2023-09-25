@@ -13,11 +13,12 @@ private:
   float integralFBx = 0.0f, integralFBy = 0.0f, integralFBz = 0.0f;
   float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;
 
-public:
-  const float updateInterval;  // Filter update frequency, in seconds (1.0f / *.*Hz)
+  unsigned long lastUpdateTime = 0;  // Store last update timestamp in microseconds
 
-  AHRS(float interval)
-    : updateInterval(interval) {}
+public:
+  float updateInterval;  // Filter update frequency, in seconds (1.0f / *.*Hz)
+
+  AHRS() {}
 
   void readIMU(float &ax, float &ay, float &az, float &gx, float &gy, float &gz) {
     IMU.readAcceleration(ax, ay, az);
@@ -28,6 +29,13 @@ public:
   }
 
   void MahonyAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az) {
+    // Determine the current update interval using micros()
+    unsigned long now = micros();
+    if (lastUpdateTime > 0) {
+      updateInterval = (float)(now - lastUpdateTime) / 1000000.0f;  // Convert microseconds to seconds
+    }
+    lastUpdateTime = now;
+
     float recipNorm;
     float vx, vy, vz;
     float ex, ey, ez;
